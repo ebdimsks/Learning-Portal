@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>学習ポータル</title>
+    <link rel="icon" href="/images/auth.png" />
+    <style>
+      :root {
+        --bg: #f8f9fa;
+        --card: #ffffff;
+        --border: #dadce0;
+        --text: #202124;
+        --muted: #5f6368;
+        --primary: #1a73e8;
+        --primary-hover: #1669d5;
+        --danger: #d93025;
+        --radius: 12px;
+        --shadow: 0 1px 2px rgba(60,64,67,0.2), 0 2px 6px rgba(60,64,67,0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+        font-family: Roboto, "Noto Sans JP", system-ui, -apple-system, sans-serif;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .card {
+        width: 100%;
+        max-width: 450px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 28px;
+        position: relative;
+        transition: opacity 220ms ease, transform 220ms ease;
+      }
+
+      .card.lang-swap {
+        opacity: 0;
+        transform: translateY(8px) scale(0.985);
+      }
+
+      .topbar {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+      }
+
+      .lang-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 7px 10px;
+        border-radius: 999px;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        transition: background 120ms ease, border-color 120ms ease;
+      }
+
+      .lang-btn:hover {
+        background: rgba(60,64,67,0.08);
+      }
+
+      .lang-btn:focus {
+        outline: none;
+        border-color: rgba(26,115,232,0.5);
+        box-shadow: 0 0 0 3px rgba(26,115,232,0.18);
+      }
+
+      .globe {
+        width: 16px;
+        height: 16px;
+        opacity: 0.8;
+      }
+
+      .chev {
+        width: 14px;
+        height: 14px;
+        opacity: 0.7;
+        transition: transform 160ms ease;
+      }
+
+      .menu {
+        display: none;
+        position: absolute;
+        top: 38px;
+        right: 0;
+        width: 180px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(60,64,67,0.18);
+        overflow: hidden;
+        z-index: 10;
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+        transition: opacity 180ms ease, transform 180ms ease;
+        transform-origin: top right;
+      }
+
+      .menu.open {
+        display: block;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .menu button {
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 12px 14px;
+        font-size: 13px;
+        text-align: left;
+        cursor: pointer;
+        color: var(--text);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .menu button:hover {
+        background: rgba(60,64,67,0.06);
+      }
+
+      .menu button.active {
+        font-weight: 700;
+      }
+
+      .check {
+        font-size: 14px;
+        color: var(--primary);
+        visibility: hidden;
+      }
+
+      .menu button.active .check {
+        visibility: visible;
+      }
+
+      .header {
+        display: grid;
+        justify-items: center;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 22px;
+        gap: 10px;
+      }
+
+      .logo {
+        width: 48px;
+        height: 48px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+      }
+
+      .sub {
+        margin: 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      form {
+        display: grid;
+        gap: 18px;
+      }
+
+      .field {
+        position: relative;
+      }
+
+      .input {
+        width: 100%;
+        padding: 16px 14px 14px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        font-size: 14px;
+        outline: none;
+        background: white;
+        transition: border-color 120ms ease, box-shadow 120ms ease;
+      }
+
+      .input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary);
+      }
+
+      .floating-label {
+        position: absolute;
+        left: 12px;
+        top: 16px;
+        font-size: 14px;
+        color: var(--muted);
+        pointer-events: none;
+        background: white;
+        padding: 0 4px;
+        transition: 120ms ease;
+      }
+
+      .input:focus + .floating-label,
+      .input:not(:placeholder-shown) + .floating-label {
+        top: -7px;
+        font-size: 11px;
+        color: var(--primary);
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 999px;
+        padding: 9px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 120ms ease, opacity 120ms ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn.primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn.primary:hover {
+        background: var(--primary-hover);
+      }
+
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .guest-link {
+        font-size: 13px;
+        color: var(--muted);
+        text-decoration: none;
+        cursor: pointer;
+        font-weight: 500;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+      }
+
+      .guest-link:hover {
+        color: var(--primary);
+        background: rgba(26,115,232,0.04);
+      }
+
+      .guest-link:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(26,115,232,0.08);
+      }
+
+      .spinner {
+        display: none;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      .spinner .circle {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 3px solid rgba(26,115,232,0.2);
+        border-top: 3px solid rgba(26,115,232,1);
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        display: none;
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--danger);
+      }
+
+      .status {
+        display: none;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      .locked {
+        opacity: 0.75;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .fadeOut {
+        opacity: 0;
+        transition: 250ms ease;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="loginCard" class="card" aria-live="polite">
+      <div class="topbar">
+        <button
+          id="langButton"
+          class="lang-btn"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="langMenu"
+          type="button">
+          <svg class="globe" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2" />
+            <path d="M2 12h20" stroke="currentColor" stroke-width="2" />
+            <path d="M12 2c2.5 2.8 4 6.3 4 10s-1.5 7.2-4 10c-2.5-2.8-4-6.3-4-10s1.5-7.2 4-10Z" stroke="currentColor" stroke-width="2" />
+          </svg>
+          <span id="langText">日本語</span>
+          <svg id="chev" class="chev" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <div id="langMenu" class="menu" role="menu" aria-labelledby="langButton">
+          <button type="button" data-lang="ja" id="menuJa" class="active">日本語 <span class="check">✓</span></button>
+          <button type="button" data-lang="en" id="menuEn">English <span class="check">✓</span></button>
+        </div>
+      </div>
+
+      <div class="header">
+        <img class="logo" id="logo" src="/images/auth.png" alt="ロゴ" />
+        <h1 class="title" id="titleText">学習ポータル</h1>
+        <p class="sub" id="subText">続行するにはログインしてください</p>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <input id="password" class="input" type="password" placeholder=" " autocomplete="one-time-code" />
+          <label class="floating-label" id="labelText">認証コード</label>
+        </div>
+
+        <div class="actions">
+          <button id="guestBtn" class="guest-link" type="button">ゲストとしてログイン</button>
+          <button type="submit" class="btn primary" id="submitButton" disabled>ログイン</button>
+        </div>
+      </form>
+
+      <div class="spinner" id="loadingSpinner" aria-hidden="true">
+        <div class="circle" role="status" aria-label="loading"></div>
+      </div>
+
+      <p id="errorMsg" class="error" role="alert">無効なコードです。確認して再度お試しください。</p>
+      <div id="touchIdFake" class="status" aria-live="polite"></div>
+    </div>
+
+    <script>
+      'use strict';
+
+      (function () {
+        // --- 定数・データ ---
+        const CORRECT_PASSWORD = 'password';
+
+        const LANG = {
+          ja: {
+            htmlLang: 'ja',
+            title: '学習ポータル',
+            sub: '続行するにはログインしてください',
+            label: '認証コード',
+            next: 'ログイン',
+            guest: 'ゲストとしてログイン',
+            error: '無効なコードです。確認して再度お試しください。',
+            processing: 'ログインを処理しています...',
+            touchLines: ['システムを確認しています...', 'アカウントを確認しています...'],
+            langName: '日本語',
+            logoAlt: 'ロゴ'
+          },
+          en: {
+            htmlLang: 'en',
+            title: 'Learning Portal',
+            sub: 'Please sign in to continue',
+            label: 'Authentication Code',
+            next: 'Sign in',
+            guest: 'Continue as guest',
+            error: 'Invalid code. Please check and try again.',
+            processing: 'Signing in...',
+            touchLines: ['Verifying system...', 'Verifying account...'],
+            langName: 'English',
+            logoAlt: 'logo'
+          }
+        };
+
+        let currentLang = 'ja';
+        let isProcessing = false;
+
+        // --- DOM キャッシュ ---
+        const doc = document;
+        const loginCard = doc.getElementById('loginCard');
+        const langButton = doc.getElementById('langButton');
+        const langMenu = doc.getElementById('langMenu');
+        const chev = doc.getElementById('chev');
+        const menuJa = doc.getElementById('menuJa');
+        const menuEn = doc.getElementById('menuEn');
+        const langText = doc.getElementById('langText');
+        const logo = doc.getElementById('logo');
+        const titleText = doc.getElementById('titleText');
+        const subText = doc.getElementById('subText');
+        const labelText = doc.getElementById('labelText');
+        const submitButton = doc.getElementById('submitButton');
+        const guestBtn = doc.getElementById('guestBtn');
+        const passwordInput = doc.getElementById('password');
+        const loadingSpinner = doc.getElementById('loadingSpinner');
+        const errorMsg = doc.getElementById('errorMsg');
+        const touchIdFake = doc.getElementById('touchIdFake');
+        const loginForm = doc.getElementById('loginForm');
+
+        // --- ユーティリティ ---
+        const updateNextButtonState = () => {
+          submitButton.disabled = !passwordInput.value;
+        };
+
+        const setLocked = (locked) => {
+          isProcessing = locked;
+          passwordInput.disabled = locked;
+          guestBtn.disabled = locked;
+          if (locked) loginCard.classList.add('locked');
+          else loginCard.classList.remove('locked');
+          updateNextButtonState();
+        };
+
+        // --- 言語切替 ---
+        const applyLang = (key) => {
+          const L = LANG[key];
+          if (!L) return;
+
+          doc.documentElement.lang = L.htmlLang;
+          doc.title = L.title;
+
+          titleText.textContent = L.title;
+          subText.textContent = L.sub;
+          labelText.textContent = L.label;
+          submitButton.textContent = L.next;
+          guestBtn.textContent = L.guest;
+          errorMsg.textContent = L.error;
+          langText.textContent = L.langName;
+          logo.alt = L.logoAlt;
+
+          menuJa.classList.toggle('active', key === 'ja');
+          menuEn.classList.toggle('active', key === 'en');
+        };
+
+        const setLang = (newLang) => {
+          if (isProcessing || newLang === currentLang) return;
+
+          const card = loginCard;
+          card.classList.add('lang-swap');
+
+          setTimeout(() => {
+            currentLang = newLang;
+            applyLang(currentLang);
+            closeMenu();
+            requestAnimationFrame(() => card.classList.remove('lang-swap'));
+          }, 160);
+        };
+
+        // --- メニュー制御 ---
+        const openMenu = () => {
+          if (isProcessing) return;
+          langMenu.style.display = 'block';
+          requestAnimationFrame(() => {
+            langMenu.classList.add('open');
+          });
+          langButton.setAttribute('aria-expanded', 'true');
+          chev.style.transform = 'rotate(180deg)';
+        };
+
+        const closeMenu = () => {
+          if (!langMenu.classList.contains('open')) {
+            langMenu.style.display = 'none';
+            langButton.setAttribute('aria-expanded', 'false');
+            chev.style.transform = '';
+            return;
+          }
+          langMenu.classList.remove('open');
+          langButton.setAttribute('aria-expanded', 'false');
+          chev.style.transform = '';
+          langMenu.addEventListener('transitionend', function handler() {
+            if (!langMenu.classList.contains('open')) {
+              langMenu.style.display = 'none';
+            }
+            langMenu.removeEventListener('transitionend', handler);
+          });
+        };
+
+        const toggleMenu = () => {
+          if (isProcessing) return;
+          if (langMenu.classList.contains('open')) closeMenu();
+          else openMenu();
+        };
+
+        // --- ログインフロー ---
+        const startSuccessFlow = () => {
+          const L = LANG[currentLang];
+          const steps = [...L.touchLines, L.processing];
+          let i = 0;
+
+          loadingSpinner.style.display = 'none';
+          touchIdFake.style.display = 'block';
+          touchIdFake.innerHTML = '';
+
+          const nextStep = () => {
+            if (i < steps.length) {
+              touchIdFake.innerHTML = `<p>${steps[i]}</p>`;
+              i++;
+              setTimeout(nextStep, 900);
+            } else {
+              doc.cookie = 'auth=true; path=/';
+              loginCard.classList.add('fadeOut');
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 250);
+            }
+          };
+
+          nextStep();
+        };
+
+        const startFailureFlow = () => {
+          loadingSpinner.style.display = 'none';
+          errorMsg.style.display = 'block';
+          setLocked(false);
+        };
+
+        // --- ゲストログインフロー ---
+        const guestLogin = () => {
+          if (isProcessing) return;
+
+          errorMsg.style.display = 'none';
+          touchIdFake.style.display = 'block';
+          setLocked(true);
+
+          const L = LANG[currentLang];
+          const steps =
+            currentLang === 'ja'
+              ? ['ゲストセッションを作成しています...', 'アクセス権を確認しています...', L.processing]
+              : ['Creating guest session...', 'Checking permissions...', L.processing];
+
+          let i = 0;
+          loadingSpinner.style.display = 'none';
+          touchIdFake.innerHTML = '';
+
+          const nextStep = () => {
+            if (i < steps.length) {
+              touchIdFake.innerHTML = `<p>${steps[i]}</p>`;
+              i++;
+              setTimeout(nextStep, 900);
+            } else {
+              doc.cookie = 'auth=true; path=/; max-age=86400';
+              loginCard.classList.add('fadeOut');
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 250);
+            }
+          };
+
+          nextStep();
+        };
+
+        // --- イベント登録 ---
+        langButton.addEventListener('click', toggleMenu);
+
+        [menuJa, menuEn].forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const newLang = btn.getAttribute('data-lang');
+            setLang(newLang);
+          });
+        });
+
+        window.addEventListener('click', (e) => {
+          if (!langButton.contains(e.target) && !langMenu.contains(e.target)) closeMenu();
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (isProcessing) return;
+
+          const entered = passwordInput.value;
+          if (!entered) return;
+
+          loadingSpinner.style.display = 'flex';
+          errorMsg.style.display = 'none';
+          touchIdFake.style.display = 'none';
+          setLocked(true);
+
+          setTimeout(() => {
+            if (entered === CORRECT_PASSWORD) {
+              startSuccessFlow();
+            } else {
+              startFailureFlow();
+            }
+          }, 900);
+        });
+
+        guestBtn.addEventListener('click', guestLogin);
+
+        passwordInput.addEventListener('input', updateNextButtonState);
+
+        window.addEventListener('load', () => {
+          updateNextButtonState();
+          applyLang(currentLang);
+        });
+      })();
+    </script>
+  </body>
+</html>
